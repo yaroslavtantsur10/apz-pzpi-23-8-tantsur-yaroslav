@@ -1,0 +1,298 @@
+Харківський національний університет радіоелектроніки
+Факультет комп’ютерних наук Катедра програмної інженерії
+
+
+
+
+ЗВІТ
+до практичного заняття № 2
+з дисципліни «Архітектура програмного забезпечення» на тему: «Архітектура відомих програмних систем»
+
+
+
+
+
+
+
+
+Виконав
+ст. гр. ПЗПІ-23-8
+Танцур Я.С.
+
+
+Перевірив
+ст.викладач катедри ПІ Сокорчук І.П.
+
+
+
+
+
+Харків 2026
+
+1 ІСТОРІЯ ЗМІН
+№ДатаВерсія звітуОпис змін та виправлень120.05.20260.1Створено розділ
+«Завдання»220.05.20260.1Створено розділ
+«Опис Виконаної роботи»
+2 ЗАВДАННЯ
+
+
+Метою роботи є дослідження архітектури складної програмної системи та аналіз застосованих архітектурних підходів.
+У межах роботи необхідно:
+* виконати аналіз архітектури програмної системи;
+* визначити архітектурний стиль;
+* описати основні компоненти;
+* проаналізувати взаємодію підсистем;
+* оцінити масштабованість та переваги архітектурних рішень;
+* підготувати презентацію та відеодоповідь;
+* оформити звіт відповідно до ДСТУ 3008:2015.
+
+
+
+3 ОПИС ВИКОНАНОЇ РОБОТИ
+
+3.1 Загальні відомості про систему
+Назва системи: Netflix
+Розробник: Netflix, Inc.
+Призначення системи: Netflix — це глобальна платформа для стримінгу відеоконтенту. Основні користувачі — понад 300 млн підписників по всьому світу. Платформа забезпечує перегляд фільмів, серіалів та оригінального контенту в режимі реального часу з мінімальними затримками на будь-яких пристроях.
+3.2 Архітектурний стиль системи
+Netflix використовує мікросервісну архітектуру у поєднанні з хмарною інфраструктурою AWS.
+Обґрунтування вибору: мікросервісна архітектура була обрана для вирішення ключової проблеми — одночасного обслуговування мільйонів користувачів. Вона дозволяє незалежно масштабувати окремі компоненти, ізолювати збої (fault isolation) та оновлювати окремі сервіси без зупинки всієї системи.
+
+3.3 Основні компоненти системи
+Інтерфейс користувача (Frontend): клієнтські додатки для різних платформ (веб, мобільні, Smart TV, консолі), що забезпечують взаємодію користувача з сервісом.
+Серверна частина — API Gateway: єдина точка входу, яка приймає запити від клієнтів і маршрутизує їх до відповідних мікросервісів.
+Рівень бізнес-логіки — Microservices: незалежні сервіси, кожен з яких відповідає за окрему область:
+* Auth Service — автентифікація та авторизація користувачів;
+* Billing Service — обробка платежів і управління підписками;
+* Recommendation Service — персоналізовані рекомендації на основі ML;
+* Streaming Service — доставка відеоконтенту.
+Рівень зберігання даних (Databases): AWS DynamoDB для зберігання метаданих, стану сесій та інформації про перегляди.
+Допоміжні сервіси: AWS S3 для зберігання відеофайлів; AWS Lambda для serverless-обчислень; Open Connect CDN для кешування та доставки відео.
+
+3.4 Взаємодія компонентів
+Клієнтський додаток надсилає HTTP/HTTPS-запити до API Gateway. Gateway аутентифікує запит через Auth Service та маршрутизує його до відповідного мікросервісу. Мікросервіси взаємодіють між собою через REST API та асинхронні черги повідомлень. Відеоконтент доставляється безпосередньо через мережу Open Connect CDN, що дозволяє зменшити затримки завдяки географічно розподіленому кешуванню.
+
+3.5 Масштабованість та надійність
+Балансування навантаження: AWS Elastic Load Balancing розподіляє вхідний трафік між екземплярами сервісів.
+Відмовостійкість: Netflix використовує підхід Chaos Engineering — інструмент Chaos Monkey навмисно вимикає сервіси в production-середовищі для виявлення вразливостей до того, як їх знайдуть користувачі.
+Кешування: власна CDN-мережа Open Connect кешує відеоконтент на серверах, розташованих ближче до кінцевого користувача, мінімізуючи час відповіді.
+Реплікація: дані реплікуються між декількома регіонами AWS для забезпечення високої доступності.
+Хмарна інфраструктура: Netflix майже повністю працює на AWS з використанням EC2 (обчислення), S3 (зберігання), Lambda (serverless), DynamoDB (база даних) та CloudFront (CDN).
+
+
+3.6 Приклади програмної реалізації
+
+Для наочної демонстрації принципів мікросервісної архітектури було згенеровано навчальний програмний код. Основна увага приділялася Auth Service — сервісу автентифікації, який є невід'ємною частиною інфраструктури Netflix. Він відповідає за видачу та перевірку JWT-токенів при кожному запиті користувача через API Gateway.
+Запит до ШІ: "Згенеруй базовий приклад того, як працює Auth Service у мікросервісній архітектурі (на прикладі Java/Spring Boot), який демонструє видачу та валідацію JWT-токена при взаємодії клієнта з API Gateway".
+
+1  // AuthService.java — сервіс автентифікації
+ 2  @RestController
+ 3  @RequestMapping("/auth")
+ 4  public class AuthController {
+ 5  
+ 6      private final String SECRET_KEY = "netflix_secret_key";
+ 7  
+ 8      @PostMapping("/login")
+ 9      public ResponseEntity<String> login(@RequestBody UserCredentials creds) {
+10          if ("user".equals(creds.getUsername())
+11                  && "pass".equals(creds.getPassword())) {
+12              String token = generateToken(creds.getUsername());
+13              return ResponseEntity.ok(token);
+14          }
+15          return ResponseEntity.status(401).body("Unauthorized");
+16      }
+17  
+18      private String generateToken(String username) {
+19          return Jwts.builder()
+19                  .setSubject(username)
+20                  .setExpiration(
+21                      new Date(System.currentTimeMillis() + 86400000))
+22                  .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+23                  .compact();
+24      }
+25  }
+26  
+27  // ApiGatewayFilter.java — перевірка токена в Gateway
+28  @Component
+29  public class JwtFilter implements Filter {
+30  
+31      private final String SECRET_KEY = "netflix_secret_key";
+32  
+33      @Override
+34      public void doFilter(ServletRequest request,
+35              ServletResponse response, FilterChain chain)
+36              throws IOException, ServletException {
+37          HttpServletRequest req = (HttpServletRequest) request;
+38          String token = req.getHeader("Authorization");
+39  
+40          if (token != null && validateToken(token)) {
+41              chain.doFilter(request, response);
+42          } else {
+43              ((HttpServletResponse) response)
+44                      .sendError(401, "Invalid token");
+45          }
+46      }
+47  
+48      private boolean validateToken(String token) {
+49          try {
+50              Jwts.parser()
+51                      .setSigningKey(SECRET_KEY)
+52                      .parseClaimsJws(token);
+53              return true;
+54          } catch (Exception e) {
+55              return false;
+56          }
+57      }
+58  }
+
+
+3.7 Організація матеріалів у GitHub
+Структура директорії:
+Pract2/
+ ??? AuthService.java
+ ?    ??? pzpi-23-8-tantsur-yaroslav-Pract2.txt
+
+
+3.8 Підготовка презентації та відеозапису
+Слайди та відеодоповідь створені відповідно до встановлених вимог дисципліни.
+
+
+4 ВИСНОВКИ
+
+У результаті виконання практичного заняття:
+* досліджено архітектуру програмної системи Netflix;
+* визначено її архітектурний стиль;
+* проаналізовано взаємодію компонентів;
+* оцінено переваги та обмеження архітектурних рішень;
+* сформовано практичні навички архітектурного аналізу ПЗ.
+
+
+ДОДАТОК А
+Відеозапис
+
+   Відеозапис доповіді на YouTube: https://youtu.be/ra3U8YWuau4
+Посилання на GitHub: https://github.com/yaroslavtantsur10/apz-pzpi-23-8-tantsur- yaroslav
+Хронологічний опис відеозапису:
+00:00 - Вступ 01:04 - Що таке Netflix 02:21 - Загальна архітектура 04:02 - Мікросервісна архітектура 05:34 - Хмарна інфраструктура AWS 07:33 - CDN та доставка відео 08:56 - Система рекомендацій 10:19 - Надійність системи 11:47 - Переваги та недоліки архітектури 13:25 - Висновок
+ДОДАТОК Б
+Слайди презентації
+
+Рис Б.1- Вступ
+
+Рис Б.2- Що таке Netflix
+
+Рис Б.3- Загальна архітектура
+
+
+
+Рис Б.4- Мікросервісна архітектура
+
+
+
+
+Рис Б.5- Хмарна інфраструктура AWS
+
+
+Рис Б.6- CDN та доставка відео
+
+
+
+
+
+
+
+
+
+
+
+Рис Б.7- Система рекомендацій
+
+РИС Б.8- Надійність системи
+
+
+
+
+
+
+
+
+
+
+
+
+Рис Б.9- Переваги та недоліки архітектури
+
+Рис Б.10- Висновок
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК В
+Приклади програмного коду
+
+1  // AuthService.java — сервіс автентифікації
+ 2  @RestController
+ 3  @RequestMapping("/auth")
+ 4  public class AuthController {
+ 5  
+ 6      private final String SECRET_KEY = "netflix_secret_key";
+ 7  
+ 8      @PostMapping("/login")
+ 9      public ResponseEntity<String> login(@RequestBody UserCredentials creds) {
+10          if ("user".equals(creds.getUsername())
+11                  && "pass".equals(creds.getPassword())) {
+12              String token = generateToken(creds.getUsername());
+13              return ResponseEntity.ok(token);
+14          }
+15          return ResponseEntity.status(401).body("Unauthorized");
+16      }
+17  
+18      private String generateToken(String username) {
+19          return Jwts.builder()
+19                  .setSubject(username)
+20                  .setExpiration(
+21                      new Date(System.currentTimeMillis() + 86400000))
+22                  .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+23                  .compact();
+24      }
+25  }
+26  
+27  // ApiGatewayFilter.java — перевірка токена в Gateway
+28  @Component
+29  public class JwtFilter implements Filter {
+30  
+31      private final String SECRET_KEY = "netflix_secret_key";
+32  
+33      @Override
+34      public void doFilter(ServletRequest request,
+35              ServletResponse response, FilterChain chain)
+36              throws IOException, ServletException {
+37          HttpServletRequest req = (HttpServletRequest) request;
+38          String token = req.getHeader("Authorization");
+39  
+40          if (token != null && validateToken(token)) {
+41              chain.doFilter(request, response);
+42          } else {
+43              ((HttpServletResponse) response)
+44                      .sendError(401, "Invalid token");
+45          }
+46      }
+47  
+48      private boolean validateToken(String token) {
+49          try {
+50              Jwts.parser()
+51                      .setSigningKey(SECRET_KEY)
+52                      .parseClaimsJws(token);
+53              return true;
+54          } catch (Exception e) {
+55              return false;
+56          }
+57      }
+58  }
+
